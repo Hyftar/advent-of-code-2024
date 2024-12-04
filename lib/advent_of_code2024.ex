@@ -1,13 +1,8 @@
 defmodule AdventOfCode2024 do
-  def solve(1 = _day) do
-    {Day1.Solution.solve_question_1(), Day1.Solution.solve_question_2()}
-  end
-
-  def solve(2 = _day) do
-    {Day2.Solution.solve_question_1(), Day2.Solution.solve_question_2()}
-  end
-
-  def solve(3 = _day) do
-    {Day3.Solution.solve_question_1(), Day3.Solution.solve_question_2()}
+  def solve(day) do
+    {
+      apply(:"Elixir.Day#{day}.Solution", :solve_question_1, []),
+      apply(:"Elixir.Day#{day}.Solution", :solve_question_2, [])
+    }
   end
 end
