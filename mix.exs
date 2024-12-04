@@ -21,7 +21,8 @@ defmodule AdventOfCode2024.MixProject do
   # Run "mix help deps" to learn about dependencies.
   defp deps do
     [
-      {:csv, "~> 2.4"}
+      {:csv, "~> 2.4"},
+      {:matrix, git: "git@github.com:fabio-t/elixir-matrix.git", branch: "master"}
     ]
   end
 end
