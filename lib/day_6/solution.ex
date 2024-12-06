@@ -1,4 +1,6 @@
 defmodule Day6.Solution do
+  require IEx
+
   def solve_question_1 do
     map = get_data()
 
@@ -14,7 +16,26 @@ defmodule Day6.Solution do
   end
 
   def solve_question_2 do
-    nil
+    map = get_data()
+
+    initial_guard_position = find_guard_position(map)
+
+    0..(length(map) - 1)
+    |> Enum.flat_map(
+      fn x ->
+        0..(length(hd(map)) - 1)
+        |> Enum.map(&({x, &1}))
+      end)
+    |> Enum.filter(&(&1 != initial_guard_position))
+    |> Enum.map(
+      fn block_position ->
+        IO.write(".")
+        map
+        |> set_element(block_position, "O")
+        |> check_loop(initial_guard_position, get_element(map, initial_guard_position), block_position, 0)
+      end)
+    |> Enum.uniq_by(fn {_, block_position} -> block_position end)
+    |> Enum.count(fn {result, _} -> result end)
   end
 
   defp simulate(map, {0, _} = guard_position, "^"), do: set_element(map, guard_position, "X")
@@ -31,6 +52,42 @@ defmodule Day6.Solution do
     |> simulate(next_position, new_direction)
   end
 
+  defp check_loop(_map, {0, _} = _guard_position, "^", tentative_block_position, _step), do: {false, tentative_block_position}
+  defp check_loop(map, {x, _} = _guard_position, "v", tentative_block_position, _step) when x == length(map) - 1, do: {false, tentative_block_position}
+  defp check_loop(_map, {_, 0} = _guard_position, "<", tentative_block_position, _step), do: {false, tentative_block_position}
+  defp check_loop(map, {_, y} = _guard_position, ">", tentative_block_position, _step) when y == ((hd(map) |> length()) - 1), do: {false, tentative_block_position}
+  defp check_loop(map, {x, y} = guard_position, direction, tentative_block_position, step) do
+    next_cell =
+      get_next_guard_position(direction, guard_position, false)
+      |> then(fn {_, {nx, ny}} -> get_element(map, {nx, ny}) end)
+
+    rotate = next_cell in ["#", "O"]
+
+    {new_direction, next_position} = get_next_guard_position(direction, guard_position, rotate)
+    next_cell = get_element(map, next_position)
+    cond do
+      step > 80_000 ->
+        IEx.pry()
+        {true, tentative_block_position}
+      next_cell == "4" -> {true, tentative_block_position}
+      next_cell == "3" ->
+        map
+        |> set_element(next_position, "4")
+        |> check_loop(next_position, new_direction, tentative_block_position, step + 1)
+      next_cell == "2" ->
+        map
+        |> set_element(next_position, "3")
+        |> check_loop(next_position, new_direction, tentative_block_position, step + 1)
+      next_cell == "1" ->
+        map
+        |> set_element(next_position, "2")
+        |> check_loop(next_position, new_direction, tentative_block_position, step + 1)
+      true ->
+        map
+        |> set_element(next_position, "1")
+        |> check_loop(next_position, new_direction, tentative_block_position, step + 1)
+    end
+  end
 
   defp set_element(map, {x, y}, value), do: List.update_at(map, x, fn row -> List.replace_at(row, y, value) end)
 
