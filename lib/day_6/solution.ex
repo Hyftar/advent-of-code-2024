@@ -20,22 +20,26 @@ defmodule Day6.Solution do
 
     initial_guard_position = find_guard_position(map)
 
-    0..(length(map) - 1)
+    map
+    |> simulate(initial_guard_position, get_element(map, initial_guard_position))
+    |> Enum.with_index()
     |> Enum.flat_map(
-      fn x ->
-        0..(length(hd(map)) - 1)
-        |> Enum.map(&({x, &1}))
+      fn {row, x} ->
+        row
+        |> Enum.with_index()
+        |> Enum.map(fn {cell, y} -> {{x, y}, cell} end)
       end)
-    |> Enum.filter(&(&1 != initial_guard_position))
+    |> Enum.filter(fn {pos, _cell} -> pos != initial_guard_position end)
+    |> Enum.filter(fn {_, cell} -> cell == "X" end)
     |> Enum.map(
-      fn block_position ->
-        IO.write(".")
+      fn {pos, _cell} ->
         map
-        |> set_element(block_position, "O")
-        |> check_loop(initial_guard_position, get_element(map, initial_guard_position), block_position, 0)
+        |> set_element(pos, "O")
+        |> check_loop(initial_guard_position, get_element(map, initial_guard_position), pos, 0)
       end)
-    |> Enum.uniq_by(fn {_, block_position} -> block_position end)
-    |> Enum.count(fn {result, _} -> result end)
+    |> Enum.filter(fn {loop, _} -> loop end)
+    |> Enum.uniq_by(fn {_, pos} -> pos end)
+    |> Enum.count()
   end
 
   defp simulate(map, {0, _} = guard_position, "^"), do: set_element(map, guard_position, "X")
