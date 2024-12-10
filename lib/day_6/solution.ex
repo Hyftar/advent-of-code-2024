@@ -6,7 +6,7 @@ defmodule Day6.Solution do
 
     {{start_y, start_x}, "^"} = Enum.find(matrix, &match?({_, "^"}, &1))
 
-    {updated_matrix, visited} = traverse(matrix, {start_y, start_x})
+    {updated_matrix, _visited} = traverse(matrix, {start_y, start_x})
 
     1 + Enum.count(updated_matrix, &match?({_, "X"}, &1))
   end
@@ -16,7 +16,7 @@ defmodule Day6.Solution do
 
     {{start_y, start_x}, "^"} = Enum.find(matrix, &match?({_, "^"}, &1))
 
-    {updated_matrix, visited} = traverse(matrix, {start_y, start_x})
+    {_updated_matrix, visited} = traverse(matrix, {start_y, start_x})
 
     visited
     |> Enum.filter(&(&1 != {start_y, start_x}))
