@@ -22,7 +22,8 @@ defmodule AdventOfCode2024.MixProject do
   defp deps do
     [
       {:csv, "~> 2.4"},
-      {:matrix, git: "git@github.com:fabio-t/elixir-matrix.git", branch: "master"}
+      {:matrix, git: "git@github.com:fabio-t/elixir-matrix.git", branch: "master"},
+      {:benchee, "~> 1.0"}
     ]
   end
 end
