@@ -1,32 +1,40 @@
 defmodule Day11.Solution do
+  use Memoize
+
   def solve_question_1 do
     get_data()
-    |> blink(0)
+    |> blink(25)
   end
 
   def solve_question_2 do
-    nil
+    get_data()
+    |> blink(75)
   end
 
-  def blink(stones, 25), do: stones |> Enum.count
-  def blink(stones, step) do
-    stones
-    |> Enum.reduce(
-      [],
-      fn stone, acc ->
-        digits = digits_count(stone)
-        cond do
-          stone == 0 -> acc |> push(1)
-          Bitwise.band(digits, 1) == 0 ->
-            left_num = div(stone, trunc(:math.pow(10, digits / 2)))
-            right_num = trunc(stone - left_num * :math.pow(10, :math.floor(digits / 2)))
-            acc
-            |> push(left_num)
-            |> push(right_num)
-          true -> acc |> push(stone * 2024)
-        end
-      end)
-    |> blink(step + 1)
+  def blink([_], 0), do: 1
+  def blink([0], steps), do: blink([1], steps - 1)
+
+  defmemo blink([stone], steps) do
+    case should_split?(stone) do
+      {true, split} -> blink(split, steps - 1)
+      {false, _} -> blink([stone * 2024], steps - 1)
+    end
+  end
+
+  defmemo blink([head | tail], steps) do
+    blink([head], steps) + blink(tail, steps)
+  end
+
+  def should_split?(stone) do
+    digits = digits_count(stone)
+
+    digits
+    |> Bitwise.band(1)
+    |> Kernel.===(0)
+    |> case do
+      true -> {true, split(stone, digits)}
+      false -> {false, nil}
+    end
   end
 
   def get_data do
@@ -36,8 +44,6 @@ defmodule Day11.Solution do
     |> Enum.map(&String.to_integer/1)
   end
 
-  defp push(list, elem), do: [elem | list]
-
   defp digits_count(0), do: 1
   defp digits_count(number) do
     number
@@ -46,5 +52,23 @@ defmodule Day11.Solution do
     |> :math.floor()
     |> then(&(&1 + 1))
     |> Kernel.trunc()
+  end
+
+  defp split(stone, digits) do
+    split =
+      digits
+      |> Kernel.div(2)
+      |> Kernel.trunc()
+      |> then(&(:math.pow(10, &1)))
+      |> Kernel.trunc()
+
+    [
+      stone
+      |> Kernel.div(split)
+      |> Kernel.trunc(),
+      stone
+      |> Kernel.rem(split)
+      |> Kernel.trunc()
+    ]
   end
 end
