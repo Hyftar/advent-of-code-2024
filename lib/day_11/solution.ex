@@ -13,7 +13,6 @@ defmodule Day11.Solution do
 
   def blink([_], 0), do: 1
   def blink([0], steps), do: blink([1], steps - 1)
-
   defmemo blink([stone], steps) do
     case should_split?(stone) do
       {true, split} -> blink(split, steps - 1)
@@ -49,9 +48,8 @@ defmodule Day11.Solution do
     number
     |> Kernel.abs
     |> :math.log10()
-    |> :math.floor()
-    |> then(&(&1 + 1))
     |> Kernel.trunc()
+    |> then(&(&1 + 1))
   end
 
   defp split(stone, digits) do
