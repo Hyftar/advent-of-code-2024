@@ -93,6 +93,27 @@ defmodule Day8.Solution do
     }
   end
 
+  def print_antinodes(antinodes, positions, width, height) do
+    0..(height - 1)
+    |> Enum.map(
+      fn x ->
+        0..(width - 1)
+        |> Enum.map(
+          fn y ->
+            cond do
+              Enum.member?(antinodes, {x, y}) -> "#"
+              Map.has_key?(positions, {x, y}) -> Map.get(positions, {x, y})
+              true -> "."
+            end
+          end)
+        |> Enum.join("")
+      end)
+    |> Enum.join("\n")
+    |> IO.puts
+
+    antinodes
+  end
+
   def read_file(env) do
     if env == :test do
       "lib/day_8/input.test.txt"
