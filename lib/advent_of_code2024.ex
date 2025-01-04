@@ -15,10 +15,11 @@ defmodule AdventOfCode2024 do
   def solve_many(args) do
     args
     |> Enum.map(&String.to_integer/1)
-    |> Enum.map(&(Task.async(fn -> solve(&1) end)))
+    |> Enum.map(&(Task.async(fn -> {&1, solve(&1)} end)))
     |> Task.await_many(:infinity)
     |> Enum.each(
-      fn {{part_1_result, part_1_time}, {part_2_result, part_2_time}} ->
+      fn {day, {{part_1_result, part_1_time}, {part_2_result, part_2_time}}} ->
+        IO.puts("--- Day ##{day} ---")
         IO.puts("Part #1 : #{part_1_result} in #{part_1_time}")
         IO.puts("Part #2 : #{part_2_result} in #{part_2_time}")
       end)
