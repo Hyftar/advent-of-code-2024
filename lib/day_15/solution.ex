@@ -33,6 +33,7 @@ defmodule Day15.Solution do
     if should_move do
       swaps
       |> Enum.uniq()
+      # |> tap(fn swaps -> print_map(map, Enum.flat_map(swaps, &Tuple.to_list/1)) end)
       |> Enum.reduce(map, fn {from, to}, acc -> swap(acc, from, to) end)
     else
       map
@@ -174,9 +175,7 @@ defmodule Day15.Solution do
   end
 
   def loop(map, part) do
-    map
-    |> print_map()
-    |> IO.puts
+    print_map(map)
 
     direction = IO.gets("Direction: ") |> String.trim("\n")
 
