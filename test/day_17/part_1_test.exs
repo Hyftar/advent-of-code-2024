@@ -18,7 +18,7 @@ defmodule Day17.Part1Tests do
 
         Program: 0,1,5,4,3,0
       """) do
-      assert %{ output: [4,6,3,5,6,3,5,2,1,0] } = Day17.Solution.solve_question_1()
+      assert %{ output: [4,6,3,5,6,3,5,2,1,0] } = Day17.Solution.run()
     end
   end
 
@@ -31,7 +31,7 @@ defmodule Day17.Part1Tests do
 
         Program: 2,6
       """) do
-      assert %{ registers: %{ B: 1 }} = Day17.Solution.solve_question_1()
+      assert %{ registers: %{ B: 1 }} = Day17.Solution.run()
     end
   end
 
@@ -44,7 +44,7 @@ defmodule Day17.Part1Tests do
 
         Program: 5,0,5,1,5,4
       """) do
-      assert %{ output: [0,1,2] } = Day17.Solution.solve_question_1()
+      assert %{ output: [0,1,2] } = Day17.Solution.run()
     end
   end
 
@@ -57,7 +57,7 @@ defmodule Day17.Part1Tests do
 
         Program: 0,1,5,4,3,0
       """) do
-      assert %{ output: [4,2,5,6,7,7,7,7,3,1,0], registers: %{ A: 0 } } = Day17.Solution.solve_question_1()
+      assert %{ output: [4,2,5,6,7,7,7,7,3,1,0], registers: %{ A: 0 } } = Day17.Solution.run()
     end
   end
 
@@ -70,7 +70,7 @@ defmodule Day17.Part1Tests do
 
         Program: 1,7
       """) do
-      assert %{ registers: %{ B: 26 } } = Day17.Solution.solve_question_1()
+      assert %{ registers: %{ B: 26 } } = Day17.Solution.run()
     end
   end
 
@@ -83,7 +83,7 @@ defmodule Day17.Part1Tests do
 
         Program: 4,0
       """) do
-      assert %{ registers: %{ B: 44354 } } = Day17.Solution.solve_question_1()
+      assert %{ registers: %{ B: 44354 } } = Day17.Solution.run()
     end
   end
 end
