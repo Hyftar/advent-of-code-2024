@@ -209,7 +209,9 @@ defmodule Day17.Solution do
 
     IO.puts("+---------------------+\n")
 
-    IO.puts("+---------------------------- output ----------------------------+")
+    IO.puts("+---------------------------- input ----------------------------+")
+    IO.puts("|#{program |> Enum.join(" ") |> String.pad_leading(64)}|")
+    IO.puts("+--------------------------- output ----------------------------+")
     output
     |> Enum.map(&Integer.to_string/1)
     |> then(fn output -> "|#{output |> Enum.join(" ") |>String.pad_leading(64)}|" end)
