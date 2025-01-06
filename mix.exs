@@ -14,8 +14,7 @@ defmodule AdventOfCode2024.MixProject do
   # Run "mix help compile.app" to learn about applications.
   def application do
     [
-      extra_applications: [:logger],
-      mod: {AdventOfCode2024, []}
+      extra_applications: [:logger]
     ]
   end
 
@@ -26,7 +25,8 @@ defmodule AdventOfCode2024.MixProject do
       {:csv, "~> 2.4"},
       {:matrix, git: "git@github.com:fabio-t/elixir-matrix.git", branch: "master"},
       {:benchee, "~> 1.0"},
-      {:memoize, "~> 1.4.3"}
+      {:memoize, "~> 1.4.3"},
+      {:mock, "~> 0.3.0", only: :test}
     ]
   end
 end
