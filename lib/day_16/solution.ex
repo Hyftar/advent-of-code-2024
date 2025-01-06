@@ -1,95 +1,93 @@
 defmodule Day16.Solution do
-  require IEx
+  alias Utils.PriorityQueue
+  alias Utils.Dijkstra
 
   def solve_question_1 do
-    maze = get_data()
-
-    start = find_start_coordinates(maze)
-    end_coordinates = find_end_coordinates(maze)
-
-    Map.put(maze, end_coordinates, ".")
-    |> print_maze([start, end_coordinates])
+    get_data()
+    |> then(fn maze ->
+      PriorityQueue.new()
+      |> PriorityQueue.push({{0, 1}, [find_start_coordinates(maze)]}, 0)
+      |> Dijkstra.dijkstra(
+        build_graph(maze),
+        find_end_coordinates(maze)
+      )
+    end)
   end
 
   def solve_question_2 do
-    nil
+    get_data()
+    |> then(fn maze ->
+      {_, min_score} =
+        PriorityQueue.new()
+        |> PriorityQueue.push({{0, 1}, [find_start_coordinates(maze)]}, 0)
+        |> Dijkstra.dijkstra(
+          build_graph(maze),
+          find_end_coordinates(maze)
+        )
+
+      PriorityQueue.new()
+      |> PriorityQueue.push({{0, 1}, [find_start_coordinates(maze)]}, 0)
+      |> Dijkstra.dijkstra_combined_path(build_graph(maze), find_end_coordinates(maze), min_score)
+      |> MapSet.size()
+    end)
   end
 
-  def traverse_maze(maze, current_path \\ [])
-
-  # def build_graph(_maze, {i, j, _dir}, {i, j}, graph, _current_path), do: graph
-  def traverse_maze(maze, _) do
-
-  end
-
-  def get_options(maze, {i, j, dir} = _current_position) do
-    case dir do
-      :^ ->
-        [
-          if(Map.get(maze, {i - 1, j}) == ".", do: {{i - 1, j, :^}, 1}),
-          if(Map.get(maze, {i, j - 1}) == ".", do: {{i, j - 1, :<}, 1001}),
-          if(Map.get(maze, {i, j + 1}) == ".", do: {{i, j + 1, :>}, 1001})
-        ]
-      :> ->
-        [
-          if(Map.get(maze, {i, j + 1}) == ".", do: {{i, j + 1, :>}, 1}),
-          if(Map.get(maze, {i - 1, j}) == ".", do: {{i - 1, j, :^}, 1001}),
-          if(Map.get(maze, {i + 1, j}) == ".", do: {{i + 1, j, :v}, 1001})
-        ]
-      :< ->
-        [
-          if(Map.get(maze, {i, j - 1}) == ".", do: {{i, j - 1, :<}, 1}),
-          if(Map.get(maze, {i - 1, j}) == ".", do: {{i - 1, j, :^}, 1001}),
-          if(Map.get(maze, {i + 1, j}) == ".", do: {{i + 1, j, :v}, 1001})
-        ]
-      :v ->
-        [
-          if(Map.get(maze, {i + 1, j}) == ".", do: {{i + 1, j, :v}, 1}),
-          if(Map.get(maze, {i, j - 1}) == ".", do: {{i, j - 1, :<}, 1001}),
-          if(Map.get(maze, {i, j + 1}) == ".", do: {{i, j + 1, :>}, 1001})
-        ]
-    end
-    |> Enum.filter(& &1)
-  end
-
-  def find_start_coordinates(maze) do
+  def build_graph(maze) do
     maze
-    |> Enum.find(fn {_position, char} -> char == "S" end)
-    |> then(fn {{i, j}, _} -> {i, j, :>} end)
+    |> Enum.filter(fn {{i, j}, char} ->
+      cv = Enum.count([{i - 1, j}, {i + 1, j}], &maze[&1])
+      ch = Enum.count([{i, j - 1}, {i, j + 1}], &maze[&1])
+
+      (cv > 0 and ch > 0) or (char in [?S, ?E])
+    end)
+    |> Enum.map(&elem(&1, 0))
+    |> Map.new(&{&1, []})
+    |> seed_neighbors(maze)
   end
 
-  def find_end_coordinates(maze) do
-    maze
-    |> Enum.find(fn {_position, char} -> char == "E" end)
-    |> then(fn {{i, j}, _} -> {i, j} end)
-  end
-
-  def print_maze(maze, highlight_positions \\ []) do
-    maze
-    |> Enum.sort()
-    |> Stream.chunk_by(fn {{x, _}, _} -> x end)
-    |> Stream.map(
-      fn chunk ->
-        chunk
-        |> Stream.map(fn {pos, char} -> if pos in highlight_positions, do: IO.ANSI.green_background() <> char <> IO.ANSI.reset(), else: char end)
-        |> Enum.join("")
-      end)
-    |> Enum.join("\n")
-    |> IO.puts()
-  end
-
-  def shortest_path_weight(graph, start_position, end_position) do
+  def seed_neighbors(graph, maze) do
     graph
-    |> Graph.get_shortest_path(start_position, end_position)
-    |> Stream.chunk_every(2, 1, :discard)
-    |> Stream.map(fn [v1, v2] -> Graph.edge(graph, v1, v2).weight end)
-    |> Enum.sum()
+    |> Enum.reduce(%{}, fn {{i, j}, _}, g ->
+      north_neighbors =
+        {i - 1, j}
+        |> Stream.iterate(fn {i2, j2} -> {i2 - 1, j2} end)
+        |> Stream.take_while(&maze[&1])
+        |> Enum.find(&graph[&1])
+
+      south_neighbors =
+        {i + 1, j}
+        |> Stream.iterate(fn {i2, j2} -> {i2 + 1, j2} end)
+        |> Stream.take_while(&maze[&1])
+        |> Enum.find(&graph[&1])
+
+      west_neighbors =
+        {i, j - 1}
+        |> Stream.iterate(fn {i2, j2} -> {i2, j2 - 1} end)
+        |> Stream.take_while(&maze[&1])
+        |> Enum.find(&graph[&1])
+
+      east_neighbors =
+        {i, j + 1}
+        |> Stream.iterate(fn {i2, j2} -> {i2, j2 + 1} end)
+        |> Stream.take_while(&maze[&1])
+        |> Enum.find(&graph[&1])
+
+      neighbors =
+        [north_neighbors, south_neighbors, west_neighbors, east_neighbors]
+        |> Enum.reject(&is_nil/1)
+        |> Enum.filter(&graph[&1])
+
+      Map.put(g, {i, j}, neighbors)
+    end)
   end
+
+  def find_start_coordinates(maze), do: Enum.find(maze, fn {_, char} -> char == ?S end) |> elem(0)
+  def find_end_coordinates(maze), do: Enum.find(maze, fn {_, char} -> char == ?E end) |> elem(0)
 
   def get_data do
-    File.read!("lib/day_16/input.test.txt")
+    File.read!("lib/day_16/input.txt")
     |> String.split("\n", trim: true)
-    |> Stream.map(&String.split(&1, "", trim: true))
+    |> Stream.map(&String.to_charlist/1)
     |> Stream.with_index()
     |> Stream.flat_map(
       fn {line, i} ->
@@ -98,6 +96,7 @@ defmodule Day16.Solution do
         |> Enum.map(fn {char, j} -> {{i, j}, char} end)
       end
     )
+    |> Stream.filter(fn {_, char} -> char in [?., ?S, ?E] end)
     |> Enum.into(Map.new())
   end
 end
