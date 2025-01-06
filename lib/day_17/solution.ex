@@ -9,15 +9,38 @@ defmodule Day17.Solution do
     nil
   end
 
-  def run(%{ instruction_pointer: ip, halt: halt, output: output} = state) when ip >= halt do
+  def run() do
+    get_initial_state()
+    |> run()
+  end
+
+  def run(:debug) do
+    get_initial_state()
+    |> tap(&display_state/1)
+    |> tap(fn _ -> IO.gets("Press enter to continue...") end)
+    |> run(debug: true)
+  end
+
+  def run(state, opts \\ [])
+  def run(%{ instruction_pointer: ip, halt: halt, output: output} = state, opts) when ip >= halt do
     state
   end
 
-  def run(%{ instruction_pointer: ip, program: program } = state) do
+  def run(%{ instruction_pointer: ip, program: program } = state, opts) do
     program
     |> Enum.slice(ip, 2)
     |> then(fn [opcode, operand] -> compute_instruction(state, opcode, operand) end)
-    |> run()
+    |> then(
+      fn state ->
+        if Keyword.get(opts, :debug) do
+          state
+          |> tap(&display_state/1)
+          |> tap(fn _ -> IO.gets("Press enter to continue...") end)
+          |> run(opts)
+        else
+          run(state, opts)
+        end
+      end)
   end
 
   def compute_instruction(%{ registers: %{ A: a } } = state, 0, operand) do
@@ -125,4 +148,81 @@ defmodule Day17.Solution do
       end
     )
   end
+
+  def display_state(%{ registers: %{ A: a, B: b, C: c }, output: output, program: program, instruction_pointer: ip } = state) do
+    IEx.Helpers.clear()
+
+    out_a = Integer.to_string(a)
+    out_b = Integer.to_string(b)
+    out_c = Integer.to_string(c)
+
+    oct_a = Integer.to_string(a, 8)
+    oct_b = Integer.to_string(b, 8)
+    oct_c = Integer.to_string(c, 8)
+
+    [instruction, operand] = Enum.slice(program, ip, 2)
+
+    operand =
+      operand_value(state, operand, if(instruction in [1, 3], do: :literal, else: :combo))
+
+
+    out_ope = Integer.to_string(operand)
+    oct_ope = Integer.to_string(operand, 8)
+    IO.puts("+----- registers -----+---- octal ----+")
+
+    IO.puts("| A |#{String.pad_leading(out_a, 17)}|#{String.pad_leading(oct_a, 15)}|")
+    IO.puts("| B |#{String.pad_leading(out_b, 17)}|#{String.pad_leading(oct_b, 15)}|")
+    IO.puts("| C |#{String.pad_leading(out_c, 17)}|#{String.pad_leading(oct_c, 15)}|")
+    IO.puts("|ope|#{String.pad_leading(out_ope, 17)}|#{String.pad_leading(oct_ope, 15)}|")
+    IO.puts("+---------------------+---------------+\n")
+
+    IO.puts("+------ program ------+")
+    IO.puts("| ix | inst | operand |")
+    IO.puts("+----+------+---------+")
+    program
+    |> Stream.with_index()
+    |> Stream.chunk_every(2)
+    |> Stream.map(
+      fn [{instruction, i}, {operand, j}] ->
+        [{opcode_to_name(instruction), i}, {Integer.to_string(operand), j}]
+      end)
+    |> Stream.map(
+      fn [{instruction, i}, {operand, _}] ->
+        cond do
+          ip == i ->
+            "| #{i |> Integer.to_string() |> String.pad_leading(2)} |"
+            <> IO.ANSI.green_background()
+            <> String.pad_leading(instruction, 6)
+            <> IO.ANSI.reset()
+            <> "|"
+            <> IO.ANSI.cyan_background()
+            <> String.pad_leading(operand, 9)
+            <> IO.ANSI.reset()
+            <> "|"
+
+          true ->
+            "| #{i |> Integer.to_string() |> String.pad_leading(2)} |#{String.pad_leading(instruction, 6)}|#{String.pad_leading(operand, 9)}|"
+        end
+      end)
+    |> Enum.join("\n")
+    |> IO.puts()
+
+    IO.puts("+---------------------+\n")
+
+    IO.puts("+---------------------------- output ----------------------------+")
+    output
+    |> Enum.map(&Integer.to_string/1)
+    |> then(fn output -> "|#{output |> Enum.join(" ") |>String.pad_leading(64)}|" end)
+    |> IO.puts()
+    IO.puts("+----------------------------------------------------------------+\n")
+  end
+
+  def opcode_to_name(0), do: "adv"
+  def opcode_to_name(1), do: "bxl"
+  def opcode_to_name(2), do: "bst"
+  def opcode_to_name(3), do: "jnz"
+  def opcode_to_name(4), do: "bxc"
+  def opcode_to_name(5), do: "out"
+  def opcode_to_name(6), do: "bdv"
+  def opcode_to_name(7), do: "cdv"
 end
