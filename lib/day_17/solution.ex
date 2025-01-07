@@ -6,7 +6,9 @@ defmodule Day17.Solution do
   end
 
   def solve_question_2 do
-    nil
+    get_initial_state()
+    |> then(fn %{ halt: halt } = state -> backtrack(halt, state) end)
+    |> Enum.min()
   end
 
   def run() do
@@ -22,7 +24,7 @@ defmodule Day17.Solution do
   end
 
   def run(state, opts \\ [])
-  def run(%{ instruction_pointer: ip, halt: halt, output: output} = state, opts) when ip >= halt do
+  def run(%{ instruction_pointer: ip, halt: halt, output: _output} = state, _opts) when ip >= halt do
     state
   end
 
@@ -115,6 +117,24 @@ defmodule Day17.Solution do
   def operand_value(%{ registers: %{ C: c } } = _state, 6, :combo), do: c
 
   def operand_value(_state, 7, :combo), do: throw("Combo operand 7 is reserved and will not appear in valid programs")
+
+  @base 2 ** 3
+  def untruncate(n), do: Range.new(n * @base, (n + 1) * @base - 1)
+
+  def backtrack(0, _), do: [0]
+  def backtrack(size, %{ program: program } = state) do
+    size
+    |> Kernel.-(1)
+    |> backtrack(state)
+    |> Enum.flat_map(&untruncate/1)
+    |> Enum.uniq()
+    |> Enum.filter(
+      fn a ->
+        %{output: output} = run(put_in(state[:registers][:A], a))
+
+        output == Enum.take(program, -size)
+      end)
+  end
 
   def get_initial_state do
     File.read!("lib/day_17/input.txt")
@@ -209,14 +229,14 @@ defmodule Day17.Solution do
 
     IO.puts("+---------------------+\n")
 
-    IO.puts("+---------------------------- input ----------------------------+")
-    IO.puts("|#{program |> Enum.join(" ") |> String.pad_leading(64)}|")
-    IO.puts("+--------------------------- output ----------------------------+")
+    IO.puts("+---------------------------- input ------------------------------+")
+    IO.puts("|#{program |> Enum.join(" ") |> String.pad_leading(64)} |")
+    IO.puts("+--------------------------- output ------------------------------+")
     output
     |> Enum.map(&Integer.to_string/1)
-    |> then(fn output -> "|#{output |> Enum.join(" ") |>String.pad_leading(64)}|" end)
+    |> then(fn output -> "|#{output |> Enum.join(" ") |>String.pad_leading(64)} |" end)
     |> IO.puts()
-    IO.puts("+----------------------------------------------------------------+\n")
+    IO.puts("+-----------------------------------------------------------------+\n")
   end
 
   def opcode_to_name(0), do: "adv"
