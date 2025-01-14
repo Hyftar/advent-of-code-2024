@@ -21,24 +21,15 @@ defmodule Day7.Solution do
 
   def traverse(_part, target, current, _coeffiecients) when current > target, do: {false, target}
   def traverse(_part, target, current, [] = _coeffiecients), do: {target == current, target}
-  def traverse(1 = _part, target, current, [a | rest] = _coeffiecients) do
-    with {false, _} <- traverse(1, target, current * a, rest),
-        {false, _} <- traverse(1, target, current + a, rest)
+  def traverse(part, target, current, [a | rest] = _coeffiecients) do
+    with {false, _} <- traverse(part, target, current * a, rest),
+        {false, _} <- traverse(part, target, current + a, rest)
     do
-      {false, target}
-    else
-      {true, result} -> {true, result}
-    end
-  end
-
-  def traverse(2 = _part, target, current, [a | rest] = _coeffiecients) do
-    with {false, _} <- traverse(2, target, current * a, rest),
-        {false, _} <- traverse(2, target, current + a, rest),
-        {false, _} <- traverse(2, target, concat_numbers(current, a), rest)
-    do
-      {false, target}
-    else
-      {true, result} -> {true, result}
+      if part == 2 do
+        traverse(part, target, concat_numbers(current, a), rest)
+      else
+        {false, target}
+      end
     end
   end
 

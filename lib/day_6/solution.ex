@@ -33,35 +33,37 @@ defmodule Day6.Solution do
   defp traverse(matrix, {start_y, start_x}) do
     0
     |> Stream.iterate(&(&1 + 1))
-    |> Enum.reduce_while({matrix, {start_y, start_x}, MapSet.new()}, fn _, {matrix, {y, x}, visited} ->
-      {{d_y, d_x}, current, rotated} =
-        case matrix[{y, x}] do
-          "^" -> {{-1, 0}, "^", ">"}
-          ">" -> {{0, 1}, ">", "v"}
-          "v" -> {{1, 0}, "v", "<"}
-          "<" -> {{0, -1}, "<", "^"}
+    |> Enum.reduce_while(
+      {matrix, {start_y, start_x}, MapSet.new()},
+      fn _, {matrix, {y, x}, visited} ->
+        {{d_y, d_x}, current, rotated} =
+          case matrix[{y, x}] do
+            "^" -> {{-1, 0}, "^", ">"}
+            ">" -> {{0, 1}, ">", "v"}
+            "v" -> {{1, 0}, "v", "<"}
+            "<" -> {{0, -1}, "<", "^"}
+          end
+
+        if MapSet.member?(visited, {{y, x}, current}) do
+          {:halt, :loop}
+        else
+          updated_visited = MapSet.put(visited, {{y, x}, current})
+
+          case matrix[{y + d_y, x + d_x}] do
+            char when char in ["#", "O"] ->
+              updated_matrix = Map.put(matrix, {y, x}, rotated)
+
+              {:cont, {updated_matrix, {y, x}, updated_visited}}
+
+            char when char in [".", "X"] ->
+              updated_matrix = matrix |> Map.put({y, x}, "X") |> Map.put({y + d_y, x + d_x}, current)
+
+              {:cont, {updated_matrix, {y + d_y, x + d_x}, updated_visited}}
+
+            nil ->
+              {:halt, {matrix, MapSet.new(updated_visited, &elem(&1, 0))}}
+          end
         end
-
-      if MapSet.member?(visited, {{y, x}, current}) do
-        {:halt, :loop}
-      else
-        updated_visited = MapSet.put(visited, {{y, x}, current})
-
-        case matrix[{y + d_y, x + d_x}] do
-          char when char == "#" or char == "O" ->
-            updated_matrix = Map.put(matrix, {y, x}, rotated)
-
-            {:cont, {updated_matrix, {y, x}, updated_visited}}
-
-          char when char == "." or char == "X" ->
-            updated_matrix = matrix |> Map.put({y, x}, "X") |> Map.put({y + d_y, x + d_x}, current)
-
-            {:cont, {updated_matrix, {y + d_y, x + d_x}, updated_visited}}
-
-          nil ->
-            {:halt, {matrix, MapSet.new(updated_visited, &elem(&1, 0))}}
-        end
-      end
     end)
   end
 
